@@ -1,0 +1,197 @@
+---
+title: "class1-note"
+author: "Zexian Wang"
+date: "2017年3月13日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# 相关函数
+
+## diff 函数
+
+```{r}
+diff(1:10, 2) #取出二阶滞后项以后差分
+3:10 - 1:8
+```
+
+```{r}
+diff(1:10, 2, 2) #第二次差分的时候因为都是2，2阶滞后差分后都是2-2=0
+```
+
+```{r}
+x <- cumsum(cumsum(1:10))
+diff(x, lag = 2) # 滞后 2 阶差分
+diff(x, differences = 2) # 差分2次
+```
+
+## all 函数
+
+判断向量是不是都为true
+```{r}
+all(1:10 == 1:10)
+```
+
+## lineprof
+
+```{r}
+#devtools::install_github("hadley/lineprof")
+```
+
+## benchmark
+
+```{r}
+findRuns <- function(x,tag,k) {
+  n <- length(x)
+  runs <- vector(length=n)
+  count <- 0
+  for (i in 1:(n-k+1)) {
+    if (all(x[i:(i+k-1)]==tag)) {
+      count <- count + 1
+      runs[count] <- i
+    }
+  }
+  if (count > 0) {
+    runs <- runs[1:count]
+  } else runs <- NULL
+  return(runs)
+}
+findRuns2 <- function(x,tag,k) {
+  n <- length(x)
+  runs <- vector()
+  count <- 0
+  for (i in 1:(n-k+1)) {
+    if (all(x[i:(i+k-1)]==tag)) {
+      count <- count + 1
+      runs[count] <- i
+    }
+  }
+  if (count > 0) {
+    runs <- runs[1:count]
+  } else runs <- NULL
+  return(runs)
+}
+x<- c(1,0,0,1,1,1,0,1,1)
+
+microbenchmark::microbenchmark(findRuns(x,tag=0,2))
+microbenchmark::microbenchmark(findRuns2(x,tag=0,2))
+```
+
+# 第一题考点：游程算法
+
+搜索连续相同数字
+
+- 测试：编写一个函数findRuns(x,tag,l)计算在x向量中数字tag连续出现k次的位置。
+
+```{r,eval=FALSE}
+#x<- c(1,0,0,1,1,1,0,1,1)
+#计算结果为：c(4,5,8)
+#x是输入向量
+#k是1连续出现的长度
+#tag是待查的数字
+
+findRuns <- function(x,tag,k) {
+  n <- length(x)
+  runs <- vector(length=n)
+  count <- 0
+  for (i in 1:(n-k+1)) {
+    if (all(x[i:(i+k-1)]==tag)) {
+      count <- count + 1
+      runs[count] <- i
+    }
+  }
+  if (count > 0) {
+    runs <- runs[1:count]
+  } else runs <- NULL
+  return(runs)
+}
+x<- c(1,0,0,1,1,1,0,1,1)
+
+findRuns(x,tag=0,2)
+```
+
+```{r}
+y<- c(1,0,0,1,1,1,0,1,1)
+#which(head(y,-1) == tail(y,-1) & head(y,-1)==1)
+findNum <- function(y, x, l){
+  start <- which(y == x)
+  end <- start + l - 1
+  if (sum(end > length(y))>0){
+    start <- start[-which(end > length(y))]
+    end <- end[-which(end > length(y))]
+    }
+  win <- rbind(start,end)
+  unlist(apply(win, 2, FUN = function(x){
+    if (length(unique(y[x[1]:x[2]])) == 1 ){
+      return(x[1])
+    }
+    }
+    )
+    )
+}
+microbenchmark::microbenchmark(findNum(y, 1, 2))
+
+```
+
+```{r}
+findNum <- function(y, x, l){
+  a <- which(y == x)
+  b <- which(diff(y, 1, l-1) == 0)
+  return(a[a %in% b])
+}
+microbenchmark::microbenchmark(findNum(y, 1, 2))
+```
+
+# 第二题：tidy data
+
+每一行都是一个观察，每一列都是一个属性，如果是分类的要做成分类变量;
+
+## 数据结构
+
+- 测试：计算每天最低气温和最高气温的差值
+
+```{r,eval=FALSE}
+# 计算每天最低气温和最高气温的差值
+require(reshape2)
+raw <- read.delim("data/weather.txt",check.names = F, na.strings = ".")
+raw.tidy <- melt(raw,id = c("year", "month", "element"),variable.name = "day", na.rm = TRUE)
+raw <- raw.tidy[, c("year", "month", "day","element", "value")]
+tidy <- dcast(raw, year + month + day ~ element,value.var = "value")
+tidy$range<-tidy$tmax-tidy$tmin
+head(tidy)
+```
+
+```{r}
+raw <- read.delim("data/weather.txt",check.names = F, na.strings = ".")
+require(reshape2)
+require(dplyr)
+raw_n <- melt(raw, id.vars = c("year", "month", "element"),variable.name = "day") %>% 
+  dcast(., year + month + day ~ element) %>%
+  mutate(., diff = .[,"tmax"]- .[,"tmin"]) %>%
+  na.omit(.)
+raw_n$diff
+```
+
+- 第二题扩展；anscombe转换成tidydata：x y group（分类属性）
+
+```{r}
+library(data.table)
+raw <- anscombe
+setDT(raw)
+colA<- paste0("x",1:4) 
+colB<- paste0("y",1:4) 
+res <- melt(raw, measure = list(colA, colB), value.name = c("x", "y"), variable.name = "group")
+```
+
+
+#第三题扩展，dplyr传入参数问题 function(x,y)穿不进去
+
+```{r}
+library(dplyr)
+x %>% findRuns(., 1, 2)
+```
+
+#尽量不用sapply，用vapply
