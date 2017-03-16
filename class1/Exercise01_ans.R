@@ -82,7 +82,7 @@ range[,which(colSums(range[,])==max_time)]
 
 microbenchmark::microbenchmark(solution2())
 #Unit: milliseconds
-#expr      min       lq     mean  median       uq      max neval
-#t() 27.23756 28.04619 31.12702 28.7529 32.54651 64.87426   100
+#expr      min       lq     mean   median       uq      max neval
+#solution2() 14.55474 15.18695 18.05417 16.28307 18.80142 81.79395   100
 
 # time: 30min
