@@ -11,18 +11,61 @@ ds<-data.frame(id=seq(10,80,by=10),
                stringsAsFactors = F)
 
 # transform data
-require(data.table)
-setDT(ds)
-d <- ds[anest == "dow"][, `:=`(start = timetrans(start), end = timetrans(end))]
+d <- ds[ds$anest == "dow",]
+d$start <- timetrans(d$start)
+d$end <- timetrans(d$end)
 
+
+
+
+# solution 1
+
+# check overlap
+solution1 <- function(){
+check <- function(index, data){
+  res <- index[max(data[index,]$start) < min(data[index,]$end)]
+  if(length(res)!=0){
+    return(res)
+  }
+}
+
+# generate combn
+index <- function(n){
+  ind <- NULL
+  for( k in 2:n){
+    ind <- c(ind, combn(n, k, simplify = F))
+  }
+  return(ind)
+}
+
+# find overlap
+findoverlap <- function(data){
+  n <- nrow(data)
+  Filter(Negate(is.null), lapply(index(n),function(x){check(x,data)}))
+}
+
+res <- findoverlap(d)
+l <- sapply(res,length)
+postion <- which(l == max(l))
+lapply(postion, function(x){d[res[[x]],"id"]})
+}
+microbenchmark::microbenchmark(solution1())
+
+#Unit: milliseconds
+#expr      min       lq     mean   median       uq      max neval
+#solution1() 18.18208 19.14783 20.08346 19.70622 20.34385 29.04581   100
+
+# solution 2
+
+solution2 <- function(){
 # find interval
-int <- sort(unique((c(d$start,d$end)),rightmost.closed = T))
+interval <- sort(unique((c(d$start,d$end)),rightmost.closed = T))
 
 range <- data.frame(row.names = d$id)
 
 for (i in 1:nrow(range)){
-  for (j in 1:(length(int)-1)){
-    if(max(c(d$start[i],int[j]))<min(c(d$end[i],int[j+1]))){
+  for (j in 1:(length(interval)-1)){
+    if(max(c(d$start[i],interval[j]))<min(c(d$end[i],interval[j+1]))){
       range[i,j] <- 1
     }else{
       range[i,j] <- 0
@@ -35,7 +78,9 @@ max_time <- max(colSums(range[,]))
 max_time
 
 range[,which(colSums(range[,])==max_time)]
+}
 
+microbenchmark::microbenchmark(solution2())
 #Unit: milliseconds
 #expr      min       lq     mean  median       uq      max neval
 #t() 27.23756 28.04619 31.12702 28.7529 32.54651 64.87426   100
