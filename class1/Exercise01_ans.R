@@ -1,3 +1,4 @@
+# benchmark based on surface pro 4 Intel® Core™ m3-6Y30 Processor
 # time transform function
 timetrans <- function(x){
   as.POSIXct(paste0(paste(as.character(Sys.Date()),x), ":00"))
@@ -14,7 +15,6 @@ ds<-data.frame(id=seq(10,80,by=10),
 d <- ds[ds$anest == "dow",]
 d$start <- timetrans(d$start)
 d$end <- timetrans(d$end)
-
 
 
 
@@ -85,4 +85,29 @@ microbenchmark::microbenchmark(solution2())
 #expr      min       lq     mean   median       uq      max neval
 #solution2() 14.55474 15.18695 18.05417 16.28307 18.80142 81.79395   100
 
-# time: 30min
+
+solution3 <- function(data){
+  n <- nrow(data)
+  for( k in n:2){
+    index <- combn(n, k, simplify = F)
+    res <- Filter(Negate(is.null), lapply(index, function(x){if(max(data[x,]$start) < min(data[x,]$end)){data[x,"id"]}}))
+    if(length(res)!=0){
+      return(res)
+    }
+  }
+}
+
+Rprof("Rprof.out")
+solution3(d)
+Rprof(NULL)
+summaryRprof("Rprof.out")
+microbenchmark::microbenchmark(solution3(d))
+
+solution4 <- function(data){
+  n <- nrow(data)
+  Filter(Negate(is.null), lapply(lapply(n:2, function(x){combn(n,x)}), function(x){Filter(Negate(is.null), apply(x ,2, function(x){if(max(data[x,]$start) < min(data[x,]$end)){data[x,"id"]}}))}))
+}
+solution4(d)
+microbenchmark::microbenchmark(solution4(d))
+
+
