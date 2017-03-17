@@ -53,7 +53,7 @@ microbenchmark::microbenchmark(solution1())
 
 #Unit: milliseconds
 #expr      min       lq     mean   median       uq      max neval
-#solution1() 18.18208 19.14783 20.08346 19.70622 20.34385 29.04581   100
+#solution1() 16.81404 17.64299 19.31255 18.45331 19.44819 71.58037   100
 
 # solution 2
 
@@ -82,8 +82,8 @@ range[,which(colSums(range[,])==max_time)]
 
 microbenchmark::microbenchmark(solution2())
 #Unit: milliseconds
-#expr      min       lq     mean   median       uq      max neval
-#solution2() 14.55474 15.18695 18.05417 16.28307 18.80142 81.79395   100
+#expr      min       lq     mean   median      uq      max neval
+#solution2() 14.69831 14.93569 16.20994 15.62377 16.8865 22.76569   100
 
 
 solution3 <- function(data){
@@ -97,17 +97,22 @@ solution3 <- function(data){
   }
 }
 
-Rprof("Rprof.out")
-solution3(d)
-Rprof(NULL)
-summaryRprof("Rprof.out")
+#Rprof("Rprof.out")
+#solution3(d)
+#Rprof(NULL)
+#summaryRprof("Rprof.out")
 microbenchmark::microbenchmark(solution3(d))
+#Unit: milliseconds
+#expr      min       lq     mean   median       uq     max neval
+#solution3(d) 12.35233 13.03838 14.09031 13.76303 14.51207 22.4081   100
 
 solution4 <- function(data){
   n <- nrow(data)
   Filter(Negate(is.null), lapply(lapply(n:2, function(x){combn(n,x)}), function(x){Filter(Negate(is.null), apply(x ,2, function(x){if(max(data[x,]$start) < min(data[x,]$end)){data[x,"id"]}}))}))
 }
-solution4(d)
+#solution4(d)
 microbenchmark::microbenchmark(solution4(d))
 
-
+#Unit: milliseconds
+#expr      min       lq     mean   median       uq      max neval
+#solution4(d) 17.43169 18.76857 20.00543 19.68489 20.51655 36.62422   100
