@@ -64,11 +64,12 @@ findoverlap <- function(data){
 }
 
 solution1 <- function(data){
-res <- findoverlap(data)
-l <- sapply(res,length)
-postion <- which(l == max(l))
-return(list(times = max(l), id = lapply(postion, function(x){d[res[[x]],"id"]})))
+  res <- findoverlap(data)
+  l <- sapply(res,length)
+  postion <- which(l == max(l))
+  return(list(times = max(l), id = lapply(postion, function(x){d[res[[x]],"id"]})))
 }
+
 solution1(d)
 microbenchmark::microbenchmark(solution1(d))
 
@@ -93,27 +94,26 @@ microbenchmark::microbenchmark(solution1(d))
 # solution 2
 
 ```{r}
-data <- d
 solution2 <- function(data){
-# find interval
-interval <- sort(unique((c(data$start,data$end))))
-
-range <- data.frame(row.names = data$id)
-
-for (i in 1:nrow(range)){
-  for (j in 1:(length(interval)-1)){
-    if(max(c(data$start[i],interval[j]))<min(c(data$end[i],interval[j+1]))){
-      range[i,j] <- 1
-    }else{
-      range[i,j] <- 0
+  # find interval
+  interval <- sort(unique((c(data$start,data$end))))
+  range <- data.frame(row.names = data$id)
+  
+  for (i in 1:nrow(range)){
+    for (j in 1:(length(interval)-1)){
+      if(max(c(data$start[i],interval[j]))<min(c(data$end[i],interval[j+1]))){
+        range[i,j] <- 1
+        }else{
+          range[i,j] <- 0
+        }
     }
   }
+  
+  max_time <- max(colSums(range))
+  res <- range[,which(colSums(range[,])==max_time)]
+  return(list(times = max_time, id = lapply(res, function(x){rownames(res)[x==1]})))
 }
 
-max_time <- max(colSums(range))
-res <- range[,which(colSums(range[,])==max_time)]
-return(list(times = max_time, id = lapply(res, function(x){rownames(res)[x==1]})))
-}
 solution2(d)
 microbenchmark::microbenchmark(solution2(d))
 
