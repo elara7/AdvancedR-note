@@ -71,6 +71,9 @@ return(list(times = max(l), id = lapply(postion, function(x){d[res[[x]],"id"]}))
 }
 solution1(d)
 microbenchmark::microbenchmark(solution1(d))
+
+
+
 #$times
 #[1] 3
 #
@@ -113,6 +116,9 @@ return(list(times = max_time, id = lapply(res, function(x){rownames(res)[x==1]})
 }
 solution2(d)
 microbenchmark::microbenchmark(solution2(d))
+
+
+
 #Unit: milliseconds
 #         expr      min       lq     mean   median       uq      max neval
 # solution2(d) 11.65708 12.29794 14.36177 12.69931 13.27159 152.0636   100
@@ -146,6 +152,9 @@ solution3 <- function(data){
 }
 solution3(d)
 microbenchmark::microbenchmark(solution3(d))
+
+
+
 #$times
 #[1] 3
 #
@@ -170,6 +179,9 @@ solution4 <- function(data){
 }
 solution4(d)
 microbenchmark::microbenchmark(solution4(d))
+
+
+
 #[[1]]
 #[[1]][[1]]
 #[1] 30 40 50
