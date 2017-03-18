@@ -1,0 +1,146 @@
+title: "rcpp"
+author: "Zexian Wang,"
+date: "2017年3月17日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+library(Rcpp)
+```
+
+# 定义函数
+
+```{r}
+cppFunction(
+  'int add(int x, int y, int z){
+  int sum = x + y + z;
+  return sum;
+  }'
+)
+add
+add(3, 4, 5)
+```
+
+- remark: c++代码用字符串，c++代码需要;分割
+
+# 没有输入，标量输出
+
+```{r}
+cppFunction('
+            int one(){
+            return 1L;
+            }'
+)
+one()
+```
+
+
+# 标量输入，标量输出
+
+```{r}
+cppFunction('
+  int signC(int x){
+    if(x > 0){
+      return 1;
+    } else if ( x < 0 ){
+      return -1; 
+    } else {
+      return 0;
+    }
+  }'
+)
+signC(3)
+```
+
+# 向量输入，标量输出
+
+```{r}
+cppFunction('
+  double sumC(NumericVector x){
+    int n = x.size();
+    double total = 0;
+    for (int i = 0; i < n; ++i){
+      total += x[i];
+    }
+    return total;
+  }'
+)
+sumC(1:10)
+```
+
+-remark: for 里面的语句也要用;
+
+# 向量输入，向量输出
+
+```{r}
+cppFunction('
+  NumericVector dict(double x, NumericVector ys){
+    int n = ys.size();
+    NumericVector out(n);
+    for(int i = 0; i < n; ++i){
+      out[i] = sqrt(pow(x - ys[i], 2));
+    }
+    return out;
+  }'
+)
+dict(1,1:10)
+```
+
+- remark: c++ 用pow(x,d)表示乘方，记得写:!
+
+# 矩阵输入，向量输出
+
+```{r}
+cppFunction('
+  NumericVector rowsumc(NumericMatrix x){
+    int nrow = x.nrow();
+    int ncol = x.ncol();
+    NumericVector out(nrow);
+    
+    for(int i = 0; i < nrow; i++){
+      double total = 0;
+      for (int j = 0; j < ncol; j++){
+        total += x(i, j);
+      }
+      out[i] = total;
+    }
+    return(out);
+  }'
+)
+rowsumc(matrix(1:9,nrow=3))
+```
+
+- remark: 分号！分号！分号！return！return！return！
+
+# source cpp
+
+单独的c++文件后缀：.cpp
+
+文件头：
+
+```
+#include <Rcpp.h>
+using namespace Rcpp;
+
+// [[Rcpp::export]]
+```
+
+'// [[Rcpp::export]]' 表示是否将该函数导入R
+
+
+
+
+
+
+
+
+
+
+
+
+
+
