@@ -131,6 +131,28 @@ using namespace Rcpp;
 
 '// [[Rcpp::export]]' 表示是否将该函数导入R
 
+如果想直接在 .cpp 文件中附带执行 R 代码：
+
+```
+/*** R
+# R code
+*/
+```
+
+然后用 `source(echo = TRUE)` 运行
+
+编译 C++ 代码使用 `sourceCpp("./file.cpp")`
+
+编译后的函数会加入到当前环境，但是无法保存到 .RData
+
+
+```{r}
+sourceCpp("meanc.cpp")
+meanc(1:10)
+```
+
+-remark: i++ 不需要;
+
 
 
 

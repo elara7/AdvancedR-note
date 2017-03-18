@@ -1,0 +1,66 @@
+---
+title: "OOProgramming"
+author: "wangzx"
+date: "2017年3月18日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+```{r}
+install.packages("pryr")
+```
+
+# 基础类型
+
+- 所有 R 对象底层都是一个用来描述这个对象如何储存在内存中的 C *结构体*
+
+- *结构体*包含对象的内容、内存分配信息、类型
+
+- 可以使用基础类型构建 S3
+
+- 可以用特殊的基础类型构建 S4
+
+- RC 对象是 S4 与环境对象（另一个基础类型）的结合体
+
+- 检查纯基础类型：`is.object(x)`
+
+# S3
+
+- base 和 stat 中使用
+
+- 大多数对象都是 S3 对象
+
+判断方法：
+
+```{r}
+library(pryr)
+
+df <- data.frame(x = 1:10, y = letters[1:10])
+otype(df)
+otype(df$x)
+otype(df$y)
+```
+
+- S3 和其他 OO 系统不同，其方法不属于对象或者类，而是属于函数，这个函数称为泛型函数，简称泛型
+
+查看函数是不是泛型函数：
+
+1. 查看源代码
+
+```{r}
+mean
+```
+
+UseMethod("mean")：指出调用的正确方法，即方法分派的过程（即调用这个函数的时候要用的方法，输入mean）
+
+2. 使用 ftype
+
+```{r}
+ftype(mean)
+```
+
+## 定义类和创建类
+
