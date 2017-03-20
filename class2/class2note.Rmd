@@ -1,0 +1,121 @@
+---
+title: "class2"
+author: "Zexian Wang,"
+date: "2017年3月20日"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+
+1:3生成的是 int， c(1,2,3)生成的是 numeric
+```{r}
+x <- 1:3
+y <- c(1,2,3)
+class(x)
+class(y)
+```
+
+```{r}
+f1 <- factor(letters)
+f1
+```
+
+```{r}
+levels(f1) <- rev(levels(f1))
+f1
+```
+
+```{r}
+f2 <- rev(factor(letters))
+f2
+```
+
+```{r}
+f3 <- factor(letters, levels = rev(letters))
+f3
+```
+
+- 递归向量(recurssive)
+
+列表也常称为递归向量
+```{r}
+x<-list(1:3,"a",c(T,F),c(2.3,5.9))
+x<-list(list(list(list(y=1))))
+
+is.recursive(x)
+
+
+#c()强制将向量转换成list
+x<-c(list(1,2),c(3,4))
+y<-list(list(1,2),c(3,4))
+str(x)
+str(y)
+
+#
+is.list()
+as.list()
+unlist()
+
+```
+
+- 练习
+```{r}
+#
+c(1,F)
+c("a",1)
+c(list(1),"a")
+c(TRUE,1L)
+#为什么要将列表转成原子向量要使用unlist()而不是as.vector()
+# list is vector
+#为什么1=="1"返回的结果为T，为什么-1<F结果也是T，为什么"one"<2返回的结果为F
+# 
+#为什么默认的缺失值NA是逻辑向量？逻辑型向量的特殊之处是什么？
+c(FALSE,NA_character_)
+c(FALSE,NA) # return FALSE, which means the NA is a logic 
+c(1,NA)
+```
+
+```{r}
+#generalate level
+gl()
+help(gl)
+gl(2, 8, labels = c("Control", "Treat"))
+gl(2, 1, 20)
+gl(2, 2, 20)
+```
+
+```{r}
+help("read.table")
+# seq: 行分割
+# quote：引号转换
+# dec: 小数点
+# numerals: 双精度转换时候的处理方式（字符串，选择方式）
+# row.names
+# col.names
+# as.is: 转换字符变量（默认是因子）
+# 
+```
+
+tidy data: http://vita.had.co.nz/papers/tidy-data.pdf
+
+```{r}
+df<-data.frame(x=1:3)
+df$y<-list(1:2,1:3,1:4)
+
+#Error 会将列表中的每个元素都放入自己的列中，如果长度一样，不报错
+data.frame(x=1:3,y=list(1:2,1:3,1:4))
+#I()使data.frame()把列表看作一个单元
+data.frame(x=1:3,y=I(list(1:2,1:3,1:4)))
+```
+
+
+
+
+
+
+
+
