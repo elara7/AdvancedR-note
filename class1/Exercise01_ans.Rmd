@@ -136,6 +136,21 @@ microbenchmark::microbenchmark(solution2(d))
 ```
 
 # solution 3
+
+伪代码：
+
+n = 数据行数
+
+for k n->2：
+    index <- $C_n^k$ 所有组合组成的list
+    对 index 中的每一个项：
+        if max（数据中index对应的行的start值）<min（数据中index对应的列的end值） then
+           取出数据的id值，添加到res后
+        else 返回NULL
+    将res的NULL值清空
+    if res不为空 then 返回res的长度和id
+    
+
 ```{r}
 solution3 <- function(data){
   n <- nrow(data)
@@ -210,5 +225,27 @@ microbenchmark::microbenchmark(solution4(d))
 #Unit: milliseconds
 #         expr     min       lq     mean   median      uq     max neval
 # solution4(d) 13.4778 14.23032 15.46657 14.58302 15.2049 45.3407   100
+```
+
+# 罗老师的心路历程
+
+```{r}
+#创建提取子矩阵  方法一
+a<-c(1,2,5)
+sm<-outer(a,a,FUN = "paste",sep=",")
+sm<-c(sm)
+sm<-paste0(sm,collapse=",")
+sm<-strsplit(sm,",")
+sm<-unlist(sm)
+sm<-as.numeric(sm)
+sm<-matrix(sm,ncol = 2,byrow = T)
+#创建提取子矩阵   方法二
+a<-c(1,2,5)
+n<-length(a)
+x1<-rep(a,n)
+x2<-rep(a,each=n)
+sm<-as.matrix(data.frame(x1,x2))
+#创建提取子矩阵  方法三
+sm<-as.matrix(data.frame(expand.grid(x = c(1,2,5), y = c(1,2,5))))
 ```
 
