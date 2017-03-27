@@ -184,11 +184,37 @@ microbenchmark::microbenchmark(solution3(d))
 ```
 
 ```{r}
-solutionf <- function(data){
+solutiona <- function(data){
+  n <- nrow(data)
+  ini <- NULL
+  for(i in 1:(n-1)){
+    for(j in (i+1):n){
+      ini <- c(ini, data[c(i,j),"id"] ,max(data[c(i,j),"start"]) < min(data[c(i,j),"end"]))
+      
+    }
+  }
+  ini <- as.data.frame(matrix(ini,ncol = 3, byrow = T))
+  names(ini) <- c('id1','id2','cross')
   
+  outini <- ini[ini$cross==1,c('id1','id2')]
+  outnew <- outini
+  while(!is.null(outnew)){
+    out <- outnew
+    outnew <- NULL
+    wide <- ncol(out)
+    for(i in 1:nrow(out)){
+      ans <- ini[ini[,'id1']==out[,wide][i] & ini[,'cross']==1,'id2',drop=F]
+      if(nrow(ans)!=0){
+        temp <-cbind(out[i,], ini[ini[,'id1']==out[,-1][i] & ini[,'cross']==1,'id2',drop=F])
+        outnew <- rbind(outnew,temp)
+      }
+    }
+    }
+  return(list(times=length(out),res=out))
 }
-solutionf(d)
-microbenchmark::microbenchmark(solutionf(d))
+
+solutiona(d)
+microbenchmark::microbenchmark(solutiona(d))
 ```
 
 
