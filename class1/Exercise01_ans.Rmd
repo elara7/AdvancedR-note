@@ -186,6 +186,7 @@ microbenchmark::microbenchmark(solution3(d))
 ```{r}
 solutiona <- function(data){
   n <- nrow(data)
+  # 生成两两比较数据
   ini <- NULL
   for(i in 1:(n-1)){
     for(j in (i+1):n){
@@ -193,10 +194,11 @@ solutiona <- function(data){
       
     }
   }
-  ini <- as.data.frame(matrix(ini,ncol = 3, byrow = T))
-  names(ini) <- c('id1','id2','cross')
+
+  ini <- matrix(ini,ncol = 3, byrow = T)
+  colnames(ini) <- c('id1','id2','cross')
   
-  outini <- ini[ini$cross==1,c('id1','id2')]
+  outini <- ini[ini[,'cross']==1,c('id1','id2')]
   outnew <- outini
   while(!is.null(outnew)){
     out <- outnew
@@ -205,11 +207,12 @@ solutiona <- function(data){
     for(i in 1:nrow(out)){
       ans <- ini[ini[,'id1']==out[,wide][i] & ini[,'cross']==1,'id2',drop=F]
       if(nrow(ans)!=0){
-        temp <-cbind(out[i,], ini[ini[,'id1']==out[,-1][i] & ini[,'cross']==1,'id2',drop=F])
+        temp <-cbind(matrix(rep(out[i,,drop=F],nrow(ans)),nrow = nrow(ans)), ans)
         outnew <- rbind(outnew,temp)
       }
     }
-    }
+  }
+  colnames(out) <- NULL
   return(list(times=length(out),res=out))
 }
 
