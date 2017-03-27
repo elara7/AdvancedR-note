@@ -183,6 +183,16 @@ microbenchmark::microbenchmark(solution3(d))
 # solution3(d) 9.783489 10.40024 11.20711 10.7884 11.73344 15.58466   100
 ```
 
+```{r}
+solutionf <- function(data){
+  
+}
+solutionf(d)
+microbenchmark::microbenchmark(solutionf(d))
+```
+
+
+
 # solution 4
 ```{r}
 solution4 <- function(data){
