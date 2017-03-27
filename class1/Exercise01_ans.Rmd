@@ -37,6 +37,7 @@ d$start <- timetrans(d$start)
 d$end <- timetrans(d$end)
 ```
 
+# solution a
 
 ```{r}
 solutiona <- function(data){
