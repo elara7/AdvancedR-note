@@ -41,9 +41,12 @@ d$end <- timetrans(d$end)
 
 ```{r}
 solutiona <- function(data){
+  #data <- data[data$anest == "dow",]
+  #data$start <- timetrans(data$start)
+  #data$end <- timetrans(data$end)
   n <- nrow(data)
   # 生成两两比较数据
-  ini <- matrix(NA,nrow = choose(n,2), ncol = 3)
+  ini <- matrix(NA,nrow = n*(n-1)/2, ncol = 3)
   k=1
   for(i in 1:(n-1)){
     for(j in (i+1):n){
