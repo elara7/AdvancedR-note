@@ -43,19 +43,20 @@ d$end <- timetrans(d$end)
 solutiona <- function(data){
   n <- nrow(data)
   # 生成两两比较数据
-  ini <- NULL
+  ini <- matrix(NA,nrow = choose(n,2), ncol = 3)
+  k=1
   for(i in 1:(n-1)){
     for(j in (i+1):n){
-      ini <- c(ini, data[c(i,j),"id"] ,max(data[c(i,j),"start"]) < min(data[c(i,j),"end"]))
-      
+      ini[k,] <- c(data[c(i,j),"id"] ,max(data[c(i,j),"start"]) < min(data[c(i,j),"end"]))
+      k = k + 1
     }
   }
   # 转换为矩阵
-  ini <- matrix(ini,ncol = 3, byrow = T)
+  #ini <- matrix(ini,ncol = 3, byrow = T)
   colnames(ini) <- c('id1','id2','cross')
   
   #初始化
-  outini <- ini[ini[,'cross']==1,c('id1','id2')]
+  outini <- ini[which(ini[,'cross']==1),c('id1','id2')]
   outnew <- outini
   #进入循环搜索
   while(!is.null(outnew)){
@@ -63,17 +64,16 @@ solutiona <- function(data){
     outnew <- NULL # 初始化中间变量
     wide <- ncol(out) #设定最后一列索引
     for(i in 1:nrow(out)){
-      ans <- ini[ini[,'id1']==out[,wide][i] & ini[,'cross']==1,'id2',drop=F] #搜索最后一列对应下一次结果
+      ans <- ini[which(ini[,'id1']==out[,wide][i] & ini[,'cross']==1),'id2',drop=F] #搜索最后一列对应下一次结果
       if(nrow(ans)!=0){
-        temp <-cbind(matrix(rep(out[i,,drop=F],nrow(ans)), byrow = T,nrow = nrow(ans)), ans) #合并
-        outnew <- rbind(outnew,temp)
+        #temp <-cbind(matrix(rep(out[i,,drop=F],nrow(ans)), byrow = T,nrow = nrow(ans)), ans) #合并
+        outnew <- rbind(outnew,cbind(matrix(rep(out[i,,drop=F],nrow(ans)), byrow = T,nrow = nrow(ans)), ans))
       }
     }
   }
   colnames(out) <- NULL
   return(list(times=dim(out)[2],res=out))
 }
-
 solutiona(d)
 microbenchmark::microbenchmark(solutiona(d))
 
@@ -89,6 +89,65 @@ microbenchmark::microbenchmark(solutiona(d))
 #Unit: milliseconds
 #         expr      min       lq     mean   median       uq      max neval
 # solutiona(d) 2.129874 2.246352 2.404954 2.312133 2.453959 3.902696   100
+```
+
+```{r}
+library(compiler)
+solutionacompiled3 <- cmpfun(solutiona, options = list(optimize=3))
+microbenchmark::microbenchmark(solutionacompiled3(d))
+```
+
+
+# solution a(cpp)
+
+```{r}
+library(Rcpp)
+cppFunction('
+  IntegerMatrix solutionacpp(DataFrame x){
+    IntegerVector id = x["id"];
+    IntegerVector start = x["start"];
+    IntegerVector end = x["end"];
+    int n = id.size();
+    IntegerMatrix ini(n*(n-1)/2,3);
+    int k = 0;
+    int startmax = 0;
+    int endmin = 0;
+    for(int i = 0; i < (n-1); i++){
+      for(int j = (i+1); j < n; j++){
+        ini(k, 0) = id[i];
+        ini(k, 1) = id[j];
+        if(start[i] < start[j])
+        {
+          startmax = start[j];
+        }
+        else
+        {
+          startmax = start[i];
+        }
+        if(end[i] < end[j])
+        {
+          endmin = end[i];
+        }
+        else
+        {
+          endmin = end[j];
+        }
+        if(startmax < endmin)
+        {
+          ini(k, 2) = 1;
+        }
+        else
+        {
+          ini(k, 2) = 0;
+        }
+        k++;
+      }
+    }
+    return(ini);
+  }'
+)
+solutionacpp(d)
+microbenchmark::microbenchmark(solutionacpp(d))
 ```
 
 
