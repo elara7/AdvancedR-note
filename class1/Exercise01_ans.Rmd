@@ -30,11 +30,11 @@ ds<-data.frame(id=seq(10,80,by=10),
 ```
 
 ```{r}
-#ds<-data.frame(id=seq(10,70,by=10),
-#               anest=c("baker","baker",rep("dow",5)),
-##               start=c("08:00","09:00","09:00","08:00","12:00","6:30","16:00"),
-#               end=c("11:00","13:00","11:30","15:30","16:30","8:30","19:00"),
-#               stringsAsFactors = F)
+ds<-data.frame(id=seq(10,70,by=10),
+               anest=c("baker","baker",rep("dow",5)),
+               start=c("08:00","09:00","09:00","08:00","12:00","6:30","16:00"),
+               end=c("11:00","13:00","11:30","15:30","16:30","8:30","19:00"),
+               stringsAsFactors = F)
 ```
 
 # convert data
@@ -51,6 +51,8 @@ d$end <- timetrans(d$end)
 
 ```{r}
 solutionafix <- function(data){
+  data[,"start"] <- as.numeric(strptime(data[,"start"], format = "%H:%M"))
+  data[,"end"] <- as.numeric(strptime(data[,"end"], format = "%H:%M"))
   data <- as.matrix(data[,c("id","start","end")])
   n <- nrow(data)
 
@@ -78,10 +80,10 @@ solutionafix <- function(data){
     }
   }
   }
-  return(oversetold)
+  return(list(times = ncol(oversetold), res = oversetold))
 }
-
-microbenchmark::microbenchmark(solutionafix(d))
+solutionafix(ds[ds$anest == "dow",])
+microbenchmark::microbenchmark(solutionafix(ds[ds$anest == "dow",]))
 ```
 
 
