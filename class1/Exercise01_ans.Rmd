@@ -9,7 +9,7 @@ output: html_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-benchmark based on Intel® Xeon® Processor E3-1230 v3 @ 3.30 GHz, 16.0 GB RAM, Windows 10 pro 1607
+benchmark based on Intel® Xeon® Processor E3-1230 v3 @ 3.30 GHz, 16.0 GB RAM, Ubuntu 16.04
 
 # time transform function
 
@@ -37,6 +37,17 @@ ds<-data.frame(id=seq(10,70,by=10),
                stringsAsFactors = F)
 ```
 
+```{r}
+ds<-data.frame(id=seq(10,160,by=10),
+               anest=c("baker","baker",rep("dow",14)),
+               start=c("08:00","09:00","09:00","08:00","10:00","12:30","13:30","10:30",
+                       "18:00","8:30","9:45","13:45","15:00","9:45","12:30","11:00"),
+               end=c("11:00","13:00","15:30","13:30","11:30","13:30","14:30","15:00",
+                     "19:00","19:00","11:15","15:45","18:30","14:30","17:30","18:00"),
+               stringsAsFactors = F)
+```
+
+
 # convert data
 
 ```{r}
@@ -56,7 +67,7 @@ solutionafix <- function(data){
   data <- as.matrix(data[,c("id","start","end")])
   n <- nrow(data)
 
-  ini <- matrix(NA,nrow = choose(n,2), ncol = 3)
+  ini <- matrix(NA,nrow = n*(n-1)/2, ncol = 3)
   k=1
   for(i in 1:(n-1)){
     for(j in (i+1):n){
@@ -84,6 +95,19 @@ solutionafix <- function(data){
 }
 solutionafix(ds[ds$anest == "dow",])
 microbenchmark::microbenchmark(solutionafix(ds[ds$anest == "dow",]))
+
+#$times
+#[1] 3
+#
+#$res
+#     [,1] [,2] [,3]
+#[1,]   30   40   50
+#[2,]   30   40   60
+#
+#> microbenchmark::microbenchmark(solutionafix(ds[ds$anest == "dow",]))
+#Unit: microseconds
+#                                  expr     min      lq     mean  median      uq      max neval
+# solutionafix(ds[ds$anest == "dow", ]) 465.532 482.164 536.6326 522.507 565.344 1721.841   100
 ```
 
 
