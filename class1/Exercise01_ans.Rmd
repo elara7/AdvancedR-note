@@ -15,7 +15,7 @@ benchmark based on Intel® Xeon® Processor E3-1230 v3 @ 3.30 GHz, 16.0 GB RAM, 
 
 ```{r}
 timetrans <- function(x){
-  as.POSIXct(paste0(paste(as.character(Sys.Date()),x), ":00"))
+  as.numeric(strptime(x, format = "%H:%M"))
 }
 ```
 
@@ -29,6 +29,14 @@ ds<-data.frame(id=seq(10,80,by=10),
                stringsAsFactors = F)
 ```
 
+```{r}
+#ds<-data.frame(id=seq(10,70,by=10),
+#               anest=c("baker","baker",rep("dow",5)),
+##               start=c("08:00","09:00","09:00","08:00","12:00","6:30","16:00"),
+#               end=c("11:00","13:00","11:30","15:30","16:30","8:30","19:00"),
+#               stringsAsFactors = F)
+```
+
 # convert data
 
 ```{r}
@@ -37,16 +45,53 @@ d$start <- timetrans(d$start)
 d$end <- timetrans(d$end)
 ```
 
+
+# solution a fix
+
+
+```{r}
+solutionafix <- function(data){
+  data <- as.matrix(data[,c("id","start","end")])
+  n <- nrow(data)
+
+  ini <- matrix(NA,nrow = choose(n,2), ncol = 3)
+  k=1
+  for(i in 1:(n-1)){
+    for(j in (i+1):n){
+      ini[k,] <- c(data[c(i,j),"id"] ,max(data[c(i,j),"start"]) < min(data[c(i,j),"end"]))
+      k = k + 1
+    }
+  }
+  overset <- ini[ini[,3]==1,1:2]
+  while(!is.null(overset)){
+    oversetold <- overset
+    odim <- dim(overset)
+    overset <- NULL
+  for(i in 1:(odim[1]-1)){
+    for(j in (i+1):odim[1]){
+      if(identical(oversetold[i,-odim[2]], oversetold[j,-odim[2]]) ){
+        if(length(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3])!=0)
+          if(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3]==1){
+            overset <- rbind(overset, union(oversetold[i,],oversetold[j,]))
+          }
+      }
+    }
+  }
+  }
+  return(oversetold)
+}
+
+microbenchmark::microbenchmark(solutionafix(d))
+```
+
+
 # solution a
 
 ```{r}
 solutiona <- function(data){
-  #data <- data[data$anest == "dow",]
-  #data$start <- timetrans(data$start)
-  #data$end <- timetrans(data$end)
   n <- nrow(data)
   # 生成两两比较数据
-  ini <- matrix(NA,nrow = n*(n-1)/2, ncol = 3)
+  ini <- matrix(NA,nrow = choose(n,2), ncol = 3)
   k=1
   for(i in 1:(n-1)){
     for(j in (i+1):n){
@@ -93,6 +138,10 @@ microbenchmark::microbenchmark(solutiona(d))
 #         expr      min       lq     mean   median       uq      max neval
 # solutiona(d) 2.129874 2.246352 2.404954 2.312133 2.453959 3.902696   100
 ```
+
+
+
+
 
 ```{r}
 library(compiler)
