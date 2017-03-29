@@ -56,12 +56,57 @@ d$start <- timetrans(d$start)
 d$end <- timetrans(d$end)
 ```
 
+# solution timecut
 
-# solution a fix
+```{r}
+solutiontimecut <- function(data){
+  # find interval
+  data[,"start"] <- as.numeric(strptime(data[,"start"], format = "%H:%M"))
+  data[,"end"] <- as.numeric(strptime(data[,"end"], format = "%H:%M"))
+  data <- as.matrix(data[,c("id","start","end")])
+  n <- nrow(data)
+  interval <- sort(unique((c(data[,'start'],data[,'end']))))
+  l <- length(interval)-1
+  out <- matrix(rep(0,n*l),nrow = n, ncol = l)
+  
+  for (i in 1:n){
+    for (j in 1:l){
+      if(max(c(data[i,'start'],interval[j]))<min(c(data[i,'end'],interval[j+1]))){
+        out[i,j] <- 1
+        }
+    }
+  }
+  
+  cs <- colSums(out)
+  res <- apply(out[,cs==max(cs)],2,FUN=function(x){data[x==1,'id']})
+  return(list(times = nrow(res), id = res))
+}
+
+solutiontimecut(ds[ds$anest == "dow",])
+microbenchmark::microbenchmark(solutiontimecut(ds[ds$anest == "dow",]))
+
+
+
+#$times
+#[1] 3
+#
+#$id
+#     [,1] [,2]
+#[1,]   30   30
+#[2,]   40   40
+#[3,]   50   60
+
+#> microbenchmark::microbenchmark(solution2(ds[ds$anest == "dow",]))
+#Unit: microseconds
+#                               expr     min       lq     mean   median       uq     max neval
+# solution2(ds[ds$anest == "dow", ]) 520.639 531.0715 544.6541 539.2095 553.7105 741.394   100
+```
+
+# solution association ruler
 
 
 ```{r}
-solutionafix <- function(data){
+solutionar <- function(data){
   data[,"start"] <- as.numeric(strptime(data[,"start"], format = "%H:%M"))
   data[,"end"] <- as.numeric(strptime(data[,"end"], format = "%H:%M"))
   data <- as.matrix(data[,c("id","start","end")])
@@ -93,8 +138,8 @@ solutionafix <- function(data){
   }
   return(list(times = ncol(oversetold), res = oversetold))
 }
-solutionafix(ds[ds$anest == "dow",])
-microbenchmark::microbenchmark(solutionafix(ds[ds$anest == "dow",]))
+solutionar(ds[ds$anest == "dow",])
+microbenchmark::microbenchmark(solutionar(ds[ds$anest == "dow",]))
 
 #$times
 #[1] 3
@@ -109,6 +154,11 @@ microbenchmark::microbenchmark(solutionafix(ds[ds$anest == "dow",]))
 #                                  expr     min      lq     mean  median      uq      max neval
 # solutionafix(ds[ds$anest == "dow", ]) 465.532 482.164 536.6326 522.507 565.344 1721.841   100
 ```
+
+
+
+
+
 
 
 
@@ -221,50 +271,7 @@ microbenchmark::microbenchmark(solution1(d))
 # solution1(d) 4.24 4.528976 4.823675 4.623784 5.161492 6.359961   100
 ```
 
-# solution 2
 
-```{r}
-solution2 <- function(data){
-  # find interval
-  interval <- sort(unique((c(data$start,data$end))))
-  range <- data.frame(row.names = data$id)
-  
-  for (i in 1:nrow(range)){
-    for (j in 1:(length(interval)-1)){
-      if(max(c(data$start[i],interval[j]))<min(c(data$end[i],interval[j+1]))){
-        range[i,j] <- 1
-        }else{
-          range[i,j] <- 0
-        }
-    }
-  }
-  
-  max_time <- max(colSums(range))
-  res <- range[,which(colSums(range[,])==max_time)]
-  return(list(times = max_time, id = lapply(res, function(x){rownames(res)[x==1]})))
-}
-
-solution2(d)
-microbenchmark::microbenchmark(solution2(d))
-
-
-
-#$times
-#[1] 3
-#
-#$id
-#$id$V3
-#[1] "30" "40" "50"
-#
-#$id$V5
-#[1] "30" "40" "60"
-#
-#
-#> microbenchmark::microbenchmark(solution2(d))
-#Unit: milliseconds
-#         expr      min       lq     mean   median       uq      max neval
-# solution2(d) 1.972991 2.083612 2.280669 2.173461 2.409569 4.362248   100
-```
 
 # solution 3
 
@@ -363,7 +370,7 @@ microbenchmark::microbenchmark(solution4(d))
 # solution4(d) 4.42054 4.465509 5.210422 4.606097 5.348903 41.0501   100
 ```
 
-# 罗老师的心路历程
+
 
 ```{r}
 #创建提取子矩阵  方法一
