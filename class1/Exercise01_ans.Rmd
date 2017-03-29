@@ -125,19 +125,20 @@ solutionar <- function(data){
     oversetold <- overset
     odim <- dim(overset)
     overset <- NULL
-  for(i in 1:(odim[1]-1)){
-    for(j in (i+1):odim[1]){
-      if(identical(oversetold[i,-odim[2]], oversetold[j,-odim[2]]) ){
-        if(length(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3])!=0)
-          if(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3]==1){
-            overset <- rbind(overset, union(oversetold[i,],oversetold[j,]))
-          }
+    for(i in 1:(odim[1]-1)){
+      for(j in (i+1):odim[1]){
+        if(identical(oversetold[i,-odim[2]], oversetold[j,-odim[2]]) ){
+          if(length(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3])!=0)
+            if(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3]==1){
+              overset <- rbind(overset, union(oversetold[i,],oversetold[j,]))
+            }
+        }
       }
     }
   }
-  }
   return(list(times = ncol(oversetold), res = oversetold))
 }
+
 solutionar(ds[ds$anest == "dow",])
 microbenchmark::microbenchmark(solutionar(ds[ds$anest == "dow",]))
 
