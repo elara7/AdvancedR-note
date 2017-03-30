@@ -1,0 +1,156 @@
+---
+title: "Apriori"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+benchmark based on Intel® Xeon® Processor E3-1230 v3 @ 3.30 GHz, 16.0 GB RAM, Ubuntu 16.04
+
+# load data
+
+```{r}
+ds<-data.frame(id=seq(10,80,by=10),
+               anest=c("baker","baker",rep("dow",6)),
+               start=c("08:00","09:00","09:00","08:00","10:00","12:30","13:30","18:00"),
+               end=c("11:00","13:00","15:30","13:30","11:30","13:30","14:30","19:00"),
+               stringsAsFactors = F)
+```
+
+```{r}
+ds1<-data.frame(id=seq(10,70,by=10),
+               anest=c("baker","baker",rep("dow",5)),
+               start=c("08:00","09:00","09:00","08:00","12:00","6:30","16:00"),
+               end=c("11:00","13:00","11:30","15:30","16:30","8:30","19:00"),
+               stringsAsFactors = F)
+```
+
+```{r}
+ds2<-data.frame(id=seq(10,160,by=10),
+               anest=c("baker","baker",rep("dow",14)),
+               start=c("08:00","09:00","09:00","08:00","10:00","12:30","13:30","10:30",
+                       "18:00","8:30","9:45","13:45","15:00","9:45","12:30","11:00"),
+               end=c("11:00","13:00","15:30","13:30","11:30","13:30","14:30","15:00",
+                     "19:00","19:00","11:15","15:45","18:30","14:30","17:30","18:00"),
+               stringsAsFactors = F)
+```
+
+# solution Apriori
+
+```{r}
+solutionar <- function(data){
+  # data transform
+  data[,"start"] <- as.numeric(strptime(data[,"start"], format = "%H:%M"))
+  data[,"end"] <- as.numeric(strptime(data[,"end"], format = "%H:%M"))
+  data <- as.matrix(data[,c("id","start","end")])
+  n <- nrow(data)
+  # calculate the initial overlap relationship
+  ini <- matrix(NA,nrow = n*(n-1)/2, ncol = 3)
+  k=1
+  for(i in 1:(n-1)){
+    for(j in (i+1):n){
+      ini[k,] <- c(data[c(i,j),"id"] ,max(data[c(i,j),"start"]) < min(data[c(i,j),"end"]))
+      k = k + 1
+    }
+  }
+  # find the overlap set
+  overset <- ini[ini[,3]==1,1:2]
+  while(!is.null(overset)){
+    oversetold <- overset
+    odim <- dim(overset)
+    overset <- NULL
+    for(i in 1:(odim[1]-1)){
+      for(j in (i+1):odim[1]){
+        if(identical(oversetold[i,-odim[2]], oversetold[j,-odim[2]]) ){ # if the first k-1 elements are different, break
+          if(length(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3])!=0) # if there is not any overlap set, break
+            if(ini[ini[,1] == oversetold[i,odim[2]] & ini[,2] == oversetold[j,odim[2]] ,3]==1){ # if the last element of overlap set is overlap, record 
+              overset <- rbind(overset, union(oversetold[i,],oversetold[j,]))
+            }
+        }
+      }
+    }
+  }
+  return(list(times = ncol(oversetold), id = oversetold))
+}
+
+solutionar(ds[ds$anest == "dow",])
+microbenchmark::microbenchmark(solutionar(ds[ds$anest == "dow",]),times = 1000)
+microbenchmark::microbenchmark(solutionar(ds1[ds1$anest == "dow",]),times = 1000)
+microbenchmark::microbenchmark(solutionar(ds2[ds2$anest == "dow",]),times = 1000)
+```
+
+```
+$times
+[1] 3
+
+$id
+     [,1] [,2] [,3]
+[1,]   30   40   50
+[2,]   30   40   60
+
+Unit: microseconds
+                                expr     min      lq     mean   median      uq      max neval
+ solutionar(ds[ds$anest == "dow", ]) 453.464 466.132 501.9807 475.4365 504.475 3279.457  1000
+Unit: microseconds
+                                  expr     min       lq     mean  median      uq      max neval
+ solutionar(ds1[ds1$anest == "dow", ]) 335.896 344.1655 373.0801 360.734 374.863 1313.621  1000
+Unit: milliseconds
+                                  expr      min       lq     mean   median       uq      max neval
+ solutionar(ds2[ds2$anest == "dow", ]) 124.2264 125.6245 129.0542 126.5289 128.1538 174.0793  1000
+```
+
+# solution timecut
+
+```{r}
+solutiontimecut <- function(data){
+  # data transform
+  data[,"start"] <- as.numeric(strptime(data[,"start"], format = "%H:%M"))
+  data[,"end"] <- as.numeric(strptime(data[,"end"], format = "%H:%M"))
+  data <- as.matrix(data[,c("id","start","end")])
+  n <- nrow(data)
+  # find interval
+  interval <- sort(unique((c(data[,'start'],data[,'end']))))
+  l <- length(interval)-1
+  out <- matrix(rep(0,n*l),nrow = n, ncol = l)
+  # if an anest is in one interval, the matrix element is 1, else is 0
+  for (i in 1:n){
+    for (j in 1:l){
+      if(max(c(data[i,'start'],interval[j]))<min(c(data[i,'end'],interval[j+1]))){
+        out[i,j] <- 1
+        }
+    }
+  }
+  # calculate the colsum
+  cs <- colSums(out)
+  # find out the id
+  res <- apply(out[,cs==max(cs)],2,FUN=function(x){data[x==1,'id']})
+  return(list(times = nrow(res), id = t(res)))
+}
+
+solutiontimecut(ds[ds$anest == "dow",])
+microbenchmark::microbenchmark(solutiontimecut(ds[ds$anest == "dow",]),times = 1000)
+microbenchmark::microbenchmark(solutiontimecut(ds1[ds1$anest == "dow",]),times = 1000)
+microbenchmark::microbenchmark(solutiontimecut(ds2[ds2$anest == "dow",]),times = 1000)
+```
+
+```
+$times
+[1] 3
+
+$id
+     [,1] [,2] [,3]
+[1,]   30   40   50
+[2,]   30   40   60
+
+Unit: microseconds
+                                     expr     min       lq     mean  median       uq      max neval
+ solutiontimecut(ds[ds$anest == "dow", ]) 509.185 520.0575 569.1145 539.642 557.2645 2185.269  1000
+Unit: microseconds
+                                       expr    min       lq     mean   median      uq      max neval
+ solutiontimecut(ds1[ds1$anest == "dow", ]) 486.72 498.5205 543.1769 514.6375 532.472 1758.544  1000
+Unit: milliseconds
+                                       expr      min       lq     mean   median       uq      max neval
+ solutiontimecut(ds2[ds2$anest == "dow", ]) 1.074532 1.116544 1.255271 1.158163 1.198738 43.00983  1000
+```
